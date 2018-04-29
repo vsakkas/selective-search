@@ -1,14 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import division
-
-import skimage.io
-import skimage.feature
-import skimage.color
-import skimage.transform
-import skimage.util
-import skimage.segmentation
-import numpy
-
+import numpy as np
+from skimage import color, feature, segmentation, util
 
 # "Selective Search for Object Recognition" by J.R.R. Uijlings et al.
 #
@@ -22,13 +13,13 @@ def _generate_segments(im_orig, scale, sigma, min_size):
     """
 
     # open the Image
-    im_mask = skimage.segmentation.felzenszwalb(
-        skimage.util.img_as_float(im_orig), scale=scale, sigma=sigma,
+    im_mask = segmentation.felzenszwalb(
+        util.img_as_float(im_orig), scale=scale, sigma=sigma,
         min_size=min_size)
 
     # merge mask channel to the image as a 4th channel
-    im_orig = numpy.append(
-        im_orig, numpy.zeros(im_orig.shape[:2])[:, :, numpy.newaxis], axis=2)
+    im_orig = np.append(
+        im_orig, np.zeros(im_orig.shape[:2])[:, :, np.newaxis], axis=2)
     im_orig[:, :, 3] = im_mask
 
     return im_orig
@@ -83,7 +74,7 @@ def _calc_colour_hist(img):
     """
 
     BINS = 25
-    hist = numpy.array([])
+    hist = np.array([])
 
     for colour_channel in (0, 1, 2):
 
@@ -91,8 +82,8 @@ def _calc_colour_hist(img):
         c = img[:, colour_channel]
 
         # calculate histogram for each colour and join to the result
-        hist = numpy.concatenate(
-            [hist] + [numpy.histogram(c, BINS, (0.0, 255.0))[0]])
+        hist = np.concatenate(
+            [hist] + [np.histogram(c, BINS, (0.0, 255.0))[0]])
 
     # L1 normalize
     hist = hist / len(img)
@@ -109,10 +100,10 @@ def _calc_texture_gradient(img):
 
         output will be [height(*)][width(*)]
     """
-    ret = numpy.zeros((img.shape[0], img.shape[1], img.shape[2]))
+    ret = np.zeros((img.shape[0], img.shape[1], img.shape[2]))
 
     for colour_channel in (0, 1, 2):
-        ret[:, :, colour_channel] = skimage.feature.local_binary_pattern(
+        ret[:, :, colour_channel] = feature.local_binary_pattern(
             img[:, :, colour_channel], 8, 1.0)
 
     return ret
@@ -128,7 +119,7 @@ def _calc_texture_hist(img):
     """
     BINS = 10
 
-    hist = numpy.array([])
+    hist = np.array([])
 
     for colour_channel in (0, 1, 2):
 
@@ -137,8 +128,8 @@ def _calc_texture_hist(img):
 
         # calculate histogram for each orientation and concatenate them all
         # and join to the result
-        hist = numpy.concatenate(
-            [hist] + [numpy.histogram(fd, BINS, (0.0, 1.0))[0]])
+        hist = np.concatenate(
+            [hist] + [np.histogram(fd, BINS, (0.0, 1.0))[0]])
 
     # L1 Normalize
     hist = hist / len(img)
@@ -151,7 +142,7 @@ def _extract_regions(img):
     R = {}
 
     # get hsv image
-    hsv = skimage.color.rgb2hsv(img[:, :, :3])
+    hsv = color.rgb2hsv(img[:, :, :3])
 
     # pass 1: count pixel positions
     for y, i in enumerate(img):
