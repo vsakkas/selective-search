@@ -10,7 +10,6 @@ def _generate_segments(im_orig, scale, sigma, min_size):
     '''
     Segment smallest regions by the algorithm of Felzenswalb and Huttenlocher
     '''
-
     # open the Image
     im_mask = segmentation.felzenszwalb(
         util.img_as_float(im_orig), scale=scale, sigma=sigma,
@@ -24,9 +23,9 @@ def _generate_segments(im_orig, scale, sigma, min_size):
     return im_orig
 
 
-def _sim_colour(r1, r2):
+def _sim_color(r1, r2):
     '''
-    Calculate the sum of histogram intersection of colour
+    Calculate the sum of histogram intersection of color
     '''
     return sum([min(a, b) for a, b in zip(r1['hist_c'], r2['hist_c'])])
 
@@ -57,32 +56,30 @@ def _sim_fill(r1, r2, imsize):
 
 
 def _calc_sim(r1, r2, imsize):
-    return (_sim_colour(r1, r2) + _sim_texture(r1, r2)
+    return (_sim_color(r1, r2) + _sim_texture(r1, r2)
             + _sim_size(r1, r2, imsize) + _sim_fill(r1, r2, imsize))
 
 
-def _calc_colour_hist(img):
+def _calc_color_hist(img):
     '''
-    Calculate colour histogram for each region
+    Calculate color histogram for each region
 
-    The size of output histogram will be BINS * COLOUR_CHANNELS(3)
+    The size of output histogram will be BINS * COLOR_CHANNELS(3)
 
     Number of bins is 25 as same as [uijlings_ijcv2013_draft.pdf]
 
     Extract HSV
     '''
 
-    BINS = 25
     hist = np.array([])
 
-    for colour_channel in (0, 1, 2):
+    for color_channel in (0, 1, 2):
+        # extracting one color channel
+        c = img[:, color_channel]
 
-        # extracting one colour channel
-        c = img[:, colour_channel]
-
-        # calculate histogram for each colour and join to the result
+        # calculate histogram for each color and join to the result
         hist = np.concatenate(
-            [hist] + [np.histogram(c, BINS, (0.0, 255.0))[0]])
+            [hist] + [np.histogram(c, bins=25, range=(0.0, 255.0))[0]])
 
     # L1 normalize
     hist = hist / len(img)
@@ -101,9 +98,9 @@ def _calc_texture_gradient(img):
     '''
     ret = np.zeros((img.shape[0], img.shape[1], img.shape[2]))
 
-    for colour_channel in (0, 1, 2):
-        ret[:, :, colour_channel] = feature.local_binary_pattern(
-            img[:, :, colour_channel], 8, 1.0)
+    for color_channel in (0, 1, 2):
+        ret[:, :, color_channel] = feature.local_binary_pattern(
+            img[:, :, color_channel], 8, 1.0)
 
     return ret
 
@@ -112,23 +109,21 @@ def _calc_texture_hist(img):
     '''
     Calculate texture histogram for each region
 
-    Calculate the histogram of gradient for each colours
+    Calculate the histogram of gradient for each colors
     The size of output histogram will be
-        BINS * ORIENTATIONS * COLOUR_CHANNELS(3)
+        BINS * ORIENTATIONS * COLOR_CHANNELS(3)
     '''
-    BINS = 10
 
     hist = np.array([])
 
-    for colour_channel in (0, 1, 2):
-
-        # mask by the colour channel
-        fd = img[:, colour_channel]
+    for color_channel in (0, 1, 2):
+        # mask by the color channel
+        fd = img[:, color_channel]
 
         # calculate histogram for each orientation and concatenate them all
         # and join to the result
         hist = np.concatenate(
-            [hist] + [np.histogram(fd, BINS, (0.0, 1.0))[0]])
+            [hist] + [np.histogram(fd, bins=10, range=(0.0, 1.0))[0]])
 
     # L1 Normalize
     hist = hist / len(img)
@@ -137,7 +132,6 @@ def _calc_texture_hist(img):
 
 
 def _extract_regions(img):
-
     R = {}
 
     # get hsv image
@@ -145,9 +139,7 @@ def _extract_regions(img):
 
     # pass 1: count pixel positions
     for y, i in enumerate(img):
-
         for x, (r, g, b, l) in enumerate(i):
-
             # initialize a new region
             if l not in R:
                 R[l] = {
@@ -167,13 +159,12 @@ def _extract_regions(img):
     # pass 2: calculate texture gradient
     tex_grad = _calc_texture_gradient(img)
 
-    # pass 3: calculate colour histogram of each region
+    # pass 3: calculate color histogram of each region
     for k, v in list(R.items()):
-
-        # colour histogram
+        # color histogram
         masked_pixels = hsv[:, :, :][img[:, :, 3] == k]
         R[k]['size'] = len(masked_pixels / 4)
-        R[k]['hist_c'] = _calc_colour_hist(masked_pixels)
+        R[k]['hist_c'] = _calc_color_hist(masked_pixels)
 
         # texture histogram
         R[k]['hist_t'] = _calc_texture_hist(tex_grad[:, :][img[:, :, 3] == k])
@@ -181,7 +172,7 @@ def _extract_regions(img):
     return R
 
 
-def _extract_neighbours(regions):
+def _extract_neighbors(regions):
 
     def intersect(a, b):
         if (a['min_x'] < b['min_x'] < a['max_x']
@@ -196,13 +187,13 @@ def _extract_neighbours(regions):
         return False
 
     R = list(regions.items())
-    neighbours = []
+    neighbors = []
     for cur, a in enumerate(R[:-1]):
         for b in R[cur + 1:]:
             if intersect(a[1], b[1]):
-                neighbours.append((a, b))
+                neighbors.append((a, b))
 
-    return neighbours
+    return neighbors
 
 
 def _merge_regions(r1, r2):
@@ -263,12 +254,12 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
     imsize = img.shape[0] * img.shape[1]
     R = _extract_regions(img)
 
-    # extract neighbouring information
-    neighbours = _extract_neighbours(R)
+    # extract neighboring information
+    neighbors = _extract_neighbors(R)
 
     # calculate initial similarities
     S = {}
-    for (ai, ar), (bi, br) in neighbours:
+    for (ai, ar), (bi, br) in neighbors:
         S[(ai, bi)] = _calc_sim(ar, br, imsize)
 
     # hierarchal search
