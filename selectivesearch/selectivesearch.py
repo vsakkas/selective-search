@@ -7,10 +7,9 @@ from skimage import color, feature, segmentation, util
 
 
 def _generate_segments(im_orig, scale, sigma, min_size):
-    """
-        segment smallest regions by the algorithm of Felzenswalb and
-        Huttenlocher
-    """
+    '''
+    Segment smallest regions by the algorithm of Felzenswalb and Huttenlocher
+    '''
 
     # open the Image
     im_mask = segmentation.felzenszwalb(
@@ -26,35 +25,35 @@ def _generate_segments(im_orig, scale, sigma, min_size):
 
 
 def _sim_colour(r1, r2):
-    """
-        calculate the sum of histogram intersection of colour
-    """
-    return sum([min(a, b) for a, b in zip(r1["hist_c"], r2["hist_c"])])
+    '''
+    Calculate the sum of histogram intersection of colour
+    '''
+    return sum([min(a, b) for a, b in zip(r1['hist_c'], r2['hist_c'])])
 
 
 def _sim_texture(r1, r2):
-    """
-        calculate the sum of histogram intersection of texture
-    """
-    return sum([min(a, b) for a, b in zip(r1["hist_t"], r2["hist_t"])])
+    '''
+    Calculate the sum of histogram intersection of texture
+    '''
+    return sum([min(a, b) for a, b in zip(r1['hist_t'], r2['hist_t'])])
 
 
 def _sim_size(r1, r2, imsize):
-    """
-        calculate the size similarity over the image
-    """
-    return 1.0 - (r1["size"] + r2["size"]) / imsize
+    '''
+    Calculate the size similarity over the image
+    '''
+    return 1.0 - (r1['size'] + r2['size']) / imsize
 
 
 def _sim_fill(r1, r2, imsize):
-    """
-        calculate the fill similarity over the image
-    """
+    '''
+    Calculate the fill similarity over the image
+    '''
     bbsize = (
-        (max(r1["max_x"], r2["max_x"]) - min(r1["min_x"], r2["min_x"]))
-        * (max(r1["max_y"], r2["max_y"]) - min(r1["min_y"], r2["min_y"]))
+        (max(r1['max_x'], r2['max_x']) - min(r1['min_x'], r2['min_x']))
+        * (max(r1['max_y'], r2['max_y']) - min(r1['min_y'], r2['min_y']))
     )
-    return 1.0 - (bbsize - r1["size"] - r2["size"]) / imsize
+    return 1.0 - (bbsize - r1['size'] - r2['size']) / imsize
 
 
 def _calc_sim(r1, r2, imsize):
@@ -63,15 +62,15 @@ def _calc_sim(r1, r2, imsize):
 
 
 def _calc_colour_hist(img):
-    """
-        calculate colour histogram for each region
+    '''
+    Calculate colour histogram for each region
 
-        the size of output histogram will be BINS * COLOUR_CHANNELS(3)
+    The size of output histogram will be BINS * COLOUR_CHANNELS(3)
 
-        number of bins is 25 as same as [uijlings_ijcv2013_draft.pdf]
+    Number of bins is 25 as same as [uijlings_ijcv2013_draft.pdf]
 
-        extract HSV
-    """
+    Extract HSV
+    '''
 
     BINS = 25
     hist = np.array([])
@@ -92,14 +91,14 @@ def _calc_colour_hist(img):
 
 
 def _calc_texture_gradient(img):
-    """
-        calculate texture gradient for entire image
+    '''
+    Calculate texture gradient for entire image
 
-        The original SelectiveSearch algorithm proposed Gaussian derivative
-        for 8 orientations, but we use LBP instead.
+    The original SelectiveSearch algorithm proposed Gaussian derivative
+    for 8 orientations, but we use LBP instead.
 
-        output will be [height(*)][width(*)]
-    """
+    Output will be [height(*)][width(*)]
+    '''
     ret = np.zeros((img.shape[0], img.shape[1], img.shape[2]))
 
     for colour_channel in (0, 1, 2):
@@ -110,13 +109,13 @@ def _calc_texture_gradient(img):
 
 
 def _calc_texture_hist(img):
-    """
-        calculate texture histogram for each region
+    '''
+    Calculate texture histogram for each region
 
-        calculate the histogram of gradient for each colours
-        the size of output histogram will be
-            BINS * ORIENTATIONS * COLOUR_CHANNELS(3)
-    """
+    Calculate the histogram of gradient for each colours
+    The size of output histogram will be
+        BINS * ORIENTATIONS * COLOUR_CHANNELS(3)
+    '''
     BINS = 10
 
     hist = np.array([])
@@ -152,18 +151,18 @@ def _extract_regions(img):
             # initialize a new region
             if l not in R:
                 R[l] = {
-                    "min_x": 0xffff, "min_y": 0xffff,
-                    "max_x": 0, "max_y": 0, "labels": [l]}
+                    'min_x': 0xffff, 'min_y': 0xffff,
+                    'max_x': 0, 'max_y': 0, 'labels': [l]}
 
             # bounding box
-            if R[l]["min_x"] > x:
-                R[l]["min_x"] = x
-            if R[l]["min_y"] > y:
-                R[l]["min_y"] = y
-            if R[l]["max_x"] < x:
-                R[l]["max_x"] = x
-            if R[l]["max_y"] < y:
-                R[l]["max_y"] = y
+            if R[l]['min_x'] > x:
+                R[l]['min_x'] = x
+            if R[l]['min_y'] > y:
+                R[l]['min_y'] = y
+            if R[l]['max_x'] < x:
+                R[l]['max_x'] = x
+            if R[l]['max_y'] < y:
+                R[l]['max_y'] = y
 
     # pass 2: calculate texture gradient
     tex_grad = _calc_texture_gradient(img)
@@ -173,11 +172,11 @@ def _extract_regions(img):
 
         # colour histogram
         masked_pixels = hsv[:, :, :][img[:, :, 3] == k]
-        R[k]["size"] = len(masked_pixels / 4)
-        R[k]["hist_c"] = _calc_colour_hist(masked_pixels)
+        R[k]['size'] = len(masked_pixels / 4)
+        R[k]['hist_c'] = _calc_colour_hist(masked_pixels)
 
         # texture histogram
-        R[k]["hist_t"] = _calc_texture_hist(tex_grad[:, :][img[:, :, 3] == k])
+        R[k]['hist_t'] = _calc_texture_hist(tex_grad[:, :][img[:, :, 3] == k])
 
     return R
 
@@ -185,14 +184,14 @@ def _extract_regions(img):
 def _extract_neighbours(regions):
 
     def intersect(a, b):
-        if (a["min_x"] < b["min_x"] < a["max_x"]
-                and a["min_y"] < b["min_y"] < a["max_y"]) or (
-            a["min_x"] < b["max_x"] < a["max_x"]
-                and a["min_y"] < b["max_y"] < a["max_y"]) or (
-            a["min_x"] < b["min_x"] < a["max_x"]
-                and a["min_y"] < b["max_y"] < a["max_y"]) or (
-            a["min_x"] < b["max_x"] < a["max_x"]
-                and a["min_y"] < b["min_y"] < a["max_y"]):
+        if (a['min_x'] < b['min_x'] < a['max_x']
+                and a['min_y'] < b['min_y'] < a['max_y']) or (
+            a['min_x'] < b['max_x'] < a['max_x']
+                and a['min_y'] < b['max_y'] < a['max_y']) or (
+            a['min_x'] < b['min_x'] < a['max_x']
+                and a['min_y'] < b['max_y'] < a['max_y']) or (
+            a['min_x'] < b['max_x'] < a['max_x']
+                and a['min_y'] < b['min_y'] < a['max_y']):
             return True
         return False
 
@@ -207,24 +206,23 @@ def _extract_neighbours(regions):
 
 
 def _merge_regions(r1, r2):
-    new_size = r1["size"] + r2["size"]
+    new_size = r1['size'] + r2['size']
     rt = {
-        "min_x": min(r1["min_x"], r2["min_x"]),
-        "min_y": min(r1["min_y"], r2["min_y"]),
-        "max_x": max(r1["max_x"], r2["max_x"]),
-        "max_y": max(r1["max_y"], r2["max_y"]),
-        "size": new_size,
-        "hist_c": (
-            r1["hist_c"] * r1["size"] + r2["hist_c"] * r2["size"]) / new_size,
-        "hist_t": (
-            r1["hist_t"] * r1["size"] + r2["hist_t"] * r2["size"]) / new_size,
-        "labels": r1["labels"] + r2["labels"]
+        'min_x': min(r1['min_x'], r2['min_x']),
+        'min_y': min(r1['min_y'], r2['min_y']),
+        'max_x': max(r1['max_x'], r2['max_x']),
+        'max_y': max(r1['max_y'], r2['max_y']),
+        'size': new_size,
+        'hist_c': (
+            r1['hist_c'] * r1['size'] + r2['hist_c'] * r2['size']) / new_size,
+        'hist_t': (
+            r1['hist_t'] * r1['size'] + r2['hist_t'] * r2['size']) / new_size,
+        'labels': r1['labels'] + r2['labels']
     }
     return rt
 
 
-def selective_search(
-        im_orig, scale=1.0, sigma=0.8, min_size=50):
+def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
     '''Selective Search
 
     Parameters
@@ -252,7 +250,8 @@ def selective_search(
                 ...
             ]
     '''
-    assert im_orig.shape[2] == 3, "3ch image is expected"
+    if im_orig.shape[2] != 3:
+        raise ValueError('Expected 3-channel image')
 
     # load image and get smallest regions
     # region label is stored in the 4th value of each pixel [r,g,b,(region)]
