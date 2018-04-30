@@ -1,16 +1,17 @@
 # Selective Search Implementation for Python
 
-This is a simple Selective Search Implementation for Python
+This is an implementation of Selective Search for Python 3 as it can be found in http://cs.brown.edu/~pff/papers/seg-ijcv.pdf. The code of this repository is based on https://github.com/AlpacaDB/selectivesearch.
 
-## Install
+## Download
 
+There is no package available to download, at the moment. You can however, download the implementation of Selective Search with the following command:
 ```
-$ pip install selectivesearch
+git clone https://github.com/vsakkas/selective-search.git
 ```
 
 ## Usage
 
-It is super-simple.
+The following example shows how you can use Selective Search, after you have downloaded and imported it in your project:
 
 ```python
 import skimage.data
@@ -35,36 +36,28 @@ regions[:10]
 See also an example/example.py which generates :
 ![alt tag](https://github.com/AlpacaDB/selectivesearch/raw/develop/example/result.png)
 
-## Parameters of selective search
+## Parameters of Selective Search
 
-Let's see this paper: http://cs.brown.edu/~pff/papers/seg-ijcv.pdf
 
-#### sigma
+#### im_orig : ndarray
+ Input image
+ 
+#### scale : int
+ Free parameter. Higher means larger clusters in felzenszwalb segmentation.
+ 
+#### sigma : float
+ Width of Gaussian kernel for felzenszwalb segmentation.
+ 
+#### min_size : int
+ Minimum component size for felzenszwalb segmentation.
+ 
+#### color_bins : int
+ Number of bins to be extracted when calculating the color histogram per region.
+ 
+#### texture_bins : int
+ Number of bins to be extracted when calculating the texture histogram per region.
+ 
 
-```
-In general we use a Gaussian filter to
-smooth the image slightly before computing the edge weights, in order to compensate
-for digitization artifacts. We always use a Gaussian with σ = 0.8, which does not
-produce any visible change to the image but helps remove artifacts.
-```
+## License
 
-#### min_size
-
-If the rect size is reached on `min_size`, the calculation is stopped.
-
-#### scale
-
-```
-There is one runtime parameter for the algorithm, which is the value of k that
-is used to compute the threshold function τ . Recall we use the function τ (C) =
-14
-k/|C| where |C| is the number of elements in C. Thus k effectively sets a scale of
-observation, in that a larger k causes a preference for larger components. We use
-two different parameter settings for the examples in this section (and throughout the
-paper), depending on the resolution of the image and the degree to which fine detail
-is important in the scene.
-```
-
-## Blog
-- EN: http://blog.alpaca.ai/open-source-pure-python-selective-search-and-advanced-object-recognition-with-labellio/
-- JP: http://blog-jp.alpaca.ai/entry/2015/08/05/235408
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
