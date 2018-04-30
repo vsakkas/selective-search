@@ -123,7 +123,7 @@ def _calc_texture_hist(img):
         # calculate histogram for each orientation and concatenate them all
         # and join to the result
         hist = np.concatenate(
-            [hist] + [np.histogram(fd, bins=10, range=(0.0, 1.0))[0]])
+            [hist] + [np.histogram(fd, bins=10, range=(0.0, 255.0))[0]])
 
     # L1 Normalize
     hist = hist / len(img)
