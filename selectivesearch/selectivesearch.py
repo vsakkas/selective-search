@@ -60,7 +60,7 @@ def _calc_sim(r1, r2, imsize):
             + _sim_size(r1, r2, imsize) + _sim_fill(r1, r2, imsize))
 
 
-def _calc_color_hist(img):
+def _calc_color_hist(img, color_bins):
     '''
     Calculate color histogram for each region
 
@@ -79,7 +79,7 @@ def _calc_color_hist(img):
 
         # calculate histogram for each color and join to the result
         hist = np.concatenate(
-            [hist] + [np.histogram(c, bins=25, range=(0.0, 255.0))[0]])
+            [hist] + [np.histogram(c, bins=color_bins, range=(0.0, 255.0))[0]])
 
     # L1 normalize
     hist = hist / len(img)
@@ -105,11 +105,12 @@ def _calc_texture_gradient(img):
     return ret
 
 
-def _calc_texture_hist(img):
+def _calc_texture_hist(img, texture_bins):
     '''
     Calculate texture histogram for each region
 
     Calculate the histogram of gradient for each colors
+
     The size of output histogram will be
         BINS * ORIENTATIONS * COLOR_CHANNELS(3)
     '''
@@ -123,7 +124,7 @@ def _calc_texture_hist(img):
         # calculate histogram for each orientation and concatenate them all
         # and join to the result
         hist = np.concatenate(
-            [hist] + [np.histogram(fd, bins=10, range=(0.0, 255.0))[0]])
+            [hist] + [np.histogram(fd, bins=texture_bins, range=(0.0, 255.0))[0]])
 
     # L1 Normalize
     hist = hist / len(img)
@@ -131,7 +132,7 @@ def _calc_texture_hist(img):
     return hist
 
 
-def _extract_regions(img):
+def _extract_regions(img, color_bins, texture_bins):
     R = {}
 
     # get hsv image
@@ -160,14 +161,14 @@ def _extract_regions(img):
     tex_grad = _calc_texture_gradient(img)
 
     # pass 3: calculate color histogram of each region
-    for k, v in list(R.items()):
+    for k, v in R.items():
         # color histogram
         masked_pixels = hsv[:, :, :][img[:, :, 3] == k]
         R[k]['size'] = len(masked_pixels / 4)
-        R[k]['hist_c'] = _calc_color_hist(masked_pixels)
+        R[k]['hist_c'] = _calc_color_hist(masked_pixels, color_bins)
 
         # texture histogram
-        R[k]['hist_t'] = _calc_texture_hist(tex_grad[:, :][img[:, :, 3] == k])
+        R[k]['hist_t'] = _calc_texture_hist(tex_grad[:, :][img[:, :, 3] == k], texture_bins)
 
     return R
 
@@ -213,7 +214,7 @@ def _merge_regions(r1, r2):
     return rt
 
 
-def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
+def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50, color_bins=25, texture_bins=10):
     '''Selective Search
 
     Parameters
@@ -226,6 +227,10 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
             Width of Gaussian kernel for felzenszwalb segmentation.
         min_size : int
             Minimum component size for felzenszwalb segmentation.
+        color_bins : int
+            Number of bins to be extracted when calculating the color histogram per region.
+        texture_bins : int
+            Number of bins to be extracted when calculating the texture histogram per region.
     Returns
     -------
         img : ndarray
@@ -252,7 +257,7 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
         return None, {}
 
     imsize = img.shape[0] * img.shape[1]
-    R = _extract_regions(img)
+    R = _extract_regions(img, color_bins, texture_bins)
 
     # extract neighboring information
     neighbors = _extract_neighbors(R)
@@ -264,7 +269,6 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
 
     # hierarchal search
     while S != {}:
-
         # get highest similarity
         i, j = sorted(S.items(), key=lambda i: i[1])[-1][0]
 
@@ -274,7 +278,7 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
 
         # mark similarities for regions to be removed
         key_to_delete = []
-        for k, v in list(S.items()):
+        for k, v in S.items():
             if (i in k) or (j in k):
                 key_to_delete.append(k)
 
@@ -288,7 +292,7 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
             S[(t, n)] = _calc_sim(R[t], R[n], imsize)
 
     regions = []
-    for k, r in list(R.items()):
+    for k, r in R.items():
         regions.append({
             'rect': (
                 r['min_x'], r['min_y'],
@@ -298,3 +302,47 @@ def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50):
         })
 
     return img, regions
+
+
+import skimage.data
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+
+def main():
+
+    # loading astronaut image
+    img = skimage.data.astronaut()
+
+    # perform selective search
+    img_lbl, regions = selective_search(
+        img, scale=500, sigma=0.9, min_size=10)
+
+    candidates = set()
+    for r in regions:
+        # excluding same rectangle (with different segments)
+        if r['rect'] in candidates:
+            continue
+        # excluding regions smaller than 2000 pixels
+        if r['size'] < 2000:
+            continue
+        # distorted rects
+        x, y, w, h = r['rect']
+        if w / h > 1.2 or h / w > 1.2:
+            continue
+        candidates.add(r['rect'])
+
+    # draw rectangles on the original image
+    fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
+    ax.imshow(img)
+    for x, y, w, h in candidates:
+        print(x, y, w, h)
+        rect = mpatches.Rectangle(
+            (x, y), w, h, fill=False, edgecolor='red', linewidth=1)
+        ax.add_patch(rect)
+
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
