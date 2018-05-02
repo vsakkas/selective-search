@@ -1,16 +1,13 @@
-# -*- coding: utf-8 -*-
-from __future__ import (
-    division,
-    print_function,
-)
+import sys
 
 import skimage.data
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import selectivesearch
 
 
 def main():
+    sys.path.insert(0, '../selectivesearch/')
+    import selectivesearch
 
     # loading astronaut image
     img = skimage.data.astronaut()
@@ -28,21 +25,24 @@ def main():
         if r['size'] < 2000:
             continue
         # distorted rects
-        x, y, w, h = r['rect']
-        if w / h > 1.2 or h / w > 1.2:
+        min_x, min_y, max_x, max_y = r['rect']
+        width, height = max_x - min_x, max_y - min_y
+        if width / height > 1.3 or height / width > 1.3:
             continue
         candidates.add(r['rect'])
 
     # draw rectangles on the original image
     fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
     ax.imshow(img)
-    for x, y, w, h in candidates:
-        print(x, y, w, h)
+    for min_x, min_y, max_x, max_y in candidates:
+        print(min_x, min_y, max_x, max_y)
+        width, height = max_x - min_x, max_y - min_y
         rect = mpatches.Rectangle(
-            (x, y), w, h, fill=False, edgecolor='red', linewidth=1)
+            (min_x, min_y), width, height, fill=False, edgecolor='red', linewidth=1)
         ax.add_patch(rect)
 
     plt.show()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
