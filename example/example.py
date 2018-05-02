@@ -1,11 +1,10 @@
-import sys
-
 import skimage.data
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 
 def main():
+    import sys
     sys.path.insert(0, '../selectivesearch/')
     import selectivesearch
 
@@ -15,6 +14,8 @@ def main():
     # perform selective search
     img_lbl, regions = selectivesearch.selective_search(
         img, scale=500, sigma=0.9, min_size=10)
+
+    print(regions[:5])
 
     candidates = set()
     for r in regions:
