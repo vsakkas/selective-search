@@ -4,58 +4,62 @@ This is an implementation of Selective Search for Python 3 as it can be found in
 
 ## Download
 
-There is no package available to download, at the moment. You can however, download the implementation of Selective Search with the following command:
+There is no package available to download at the moment. You can however, download the implementation of Selective Search with the following command:
 ```
 git clone https://github.com/vsakkas/selective-search.git
 ```
 
 ## Usage
 
-The following example shows how you can use Selective Search, after you have downloaded and imported it in your project:
+The following example shows how you can use Selective Search, after you have downloaded this implementation and imported it in your own project:
 
 ```python
-import skimage.data
-import selectivesearch
-
 img = skimage.data.astronaut()
 img_lbl, regions = selectivesearch.selective_search(img, scale=500, sigma=0.9, min_size=10)
-regions[:10]
+regions[:5]
 =>
-[{'labels': [0.0], 'rect': (0, 0, 15, 24), 'size': 260},
- {'labels': [1.0], 'rect': (13, 0, 1, 12), 'size': 23},
- {'labels': [2.0], 'rect': (0, 15, 15, 11), 'size': 30},
- {'labels': [3.0], 'rect': (15, 14, 0, 0), 'size': 1},
- {'labels': [4.0], 'rect': (0, 0, 61, 153), 'size': 4927},
- {'labels': [5.0], 'rect': (0, 12, 61, 142), 'size': 177},
- {'labels': [6.0], 'rect': (7, 54, 6, 17), 'size': 8},
- {'labels': [7.0], 'rect': (28, 50, 18, 32), 'size': 22},
- {'labels': [8.0], 'rect': (2, 99, 7, 24), 'size': 24},
- {'labels': [9.0], 'rect': (14, 118, 79, 117), 'size': 4008}]
+[{'rect': (0, 0, 15, 26),    'size': 313,   'labels': [0.0]},
+ {'rect': (0, 0, 61, 144),   'size': 4794,  'labels': [1.0]},
+ {'rect': (10, 0, 113, 227), 'size': 2071,  'labels': [2.0]},
+ {'rect': (46, 0, 399, 326), 'size': 43655, 'labels': [3.0]}
+ {'rect': (396, 0, 408, 74), 'size': 193,   'labels': [4.0]}]
 ```
 
 See also an example/example.py which generates :
 ![alt tag](https://github.com/AlpacaDB/selectivesearch/raw/develop/example/result.png)
 
-## Parameters of Selective Search
+## Parameters
 
 
 #### im_orig : ndarray
+ ```
  Input image
+ ```
  
 #### scale : int
+ ```
  Free parameter. Higher means larger clusters in felzenszwalb segmentation.
+ ```
  
 #### sigma : float
+ ```
  Width of Gaussian kernel for felzenszwalb segmentation.
+ ```
  
 #### min_size : int
+ ```
  Minimum component size for felzenszwalb segmentation.
+ ```
  
 #### color_bins : int
+ ```
  Number of bins to be extracted when calculating the color histogram per region.
+ ```
  
 #### texture_bins : int
+ ```
  Number of bins to be extracted when calculating the texture histogram per region.
+ ```
  
 
 ## License
