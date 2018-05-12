@@ -27,7 +27,7 @@ def main():
             continue
         # distorted rects
         min_x, min_y, max_x, max_y = r['rect']
-        width, height = max_x - min_x, max_y - min_y
+        width, height = max_x - min_x + 1, max_y - min_y + 1
         if width / height > 1.3 or height / width > 1.3:
             continue
         candidates.add(r['rect'])
