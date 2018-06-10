@@ -25,7 +25,7 @@ regions[:5]
  {'rect': (396, 0, 408, 74), 'size': 193,   'labels': [4.0]}]
 ```
 
-See also an example/example.py which generates :
+You can also check [example.py](https://github.com/vsakkas/selective-search/blob/master/example/example.py) which generates the following image:
 ![alt tag](https://github.com/AlpacaDB/selectivesearch/raw/develop/example/result.png)
 
 ## Parameters
