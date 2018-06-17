@@ -37,8 +37,9 @@ def main():
     ax.imshow(img)
     for min_x, min_y, max_x, max_y in candidates:
         print(min_x, min_y, max_x, max_y)
+        width, height = max_x - min_x, max_y - min_y
         rect = mpatches.Rectangle(
-            (min_x, min_y), max_x, max_y, fill=False, edgecolor='red', linewidth=1)
+            (min_x, min_y), width, height, fill=False, edgecolor='red', linewidth=1)
         ax.add_patch(rect)
 
     plt.show()
