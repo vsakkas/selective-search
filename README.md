@@ -1,6 +1,13 @@
-# Selective Search Implementation for Python
+# Selective Search Implementation for Python 3
 
 This is an implementation of Selective Search for Python 3 as it can be found in http://cs.brown.edu/~pff/papers/seg-ijcv.pdf. The code of this repository is based on https://github.com/AlpacaDB/selectivesearch.
+
+## Requirements
+
+Running this program on your machine requires:
+* `Python 3.6 (or newer)`
+* `numpy`
+* `skimage`
 
 ## Download
 
