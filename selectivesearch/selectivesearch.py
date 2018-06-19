@@ -2,7 +2,7 @@ import numpy as np
 from skimage import color, feature, segmentation, util
 
 
-def _generate_segments(im_orig, scale, sigma, min_size):
+def _generate_segments(im_orig: np.ndarray, scale: float, sigma: float, min_size: int) -> np.ndarray:
     '''
     Segment smallest regions by the algorithm of Felzenswalb and Huttenlocher
     '''
@@ -19,28 +19,28 @@ def _generate_segments(im_orig, scale, sigma, min_size):
     return im_orig
 
 
-def _sim_color(r1, r2):
+def _sim_color(r1: dict, r2: dict) -> np.float64:
     '''
     Calculate the sum of histogram intersection of color
     '''
     return sum([min(a, b) for a, b in zip(r1['hist_c'], r2['hist_c'])])
 
 
-def _sim_texture(r1, r2):
+def _sim_texture(r1: dict, r2: dict) -> np.float64:
     '''
     Calculate the sum of histogram intersection of texture
     '''
     return sum([min(a, b) for a, b in zip(r1['hist_t'], r2['hist_t'])])
 
 
-def _sim_size(r1, r2, imsize):
+def _sim_size(r1: dict, r2: dict, imsize: int) -> float:
     '''
     Calculate the size similarity over the image
     '''
     return 1.0 - (r1['size'] + r2['size']) / imsize
 
 
-def _sim_fill(r1, r2, imsize):
+def _sim_fill(r1: dict, r2: dict, imsize: int) -> float:
     '''
     Calculate the fill similarity over the image
     '''
@@ -51,12 +51,12 @@ def _sim_fill(r1, r2, imsize):
     return 1.0 - (bbsize - r1['size'] - r2['size']) / imsize
 
 
-def _calc_sim(r1, r2, imsize):
+def _calc_sim(r1: dict, r2: dict, imsize: int) -> np.float64:
     return (_sim_color(r1, r2) + _sim_texture(r1, r2)
             + _sim_size(r1, r2, imsize) + _sim_fill(r1, r2, imsize))
 
 
-def _calc_color_hist(img, color_bins):
+def _calc_color_hist(img: np.ndarray, color_bins: int) -> np.ndarray:
     '''
     Calculate color histogram for each region
 
@@ -83,7 +83,7 @@ def _calc_color_hist(img, color_bins):
     return hist
 
 
-def _calc_texture_gradient(img):
+def _calc_texture_gradient(img) -> np.ndarray:
     '''
     Calculate texture gradient for entire image
 
@@ -101,7 +101,7 @@ def _calc_texture_gradient(img):
     return ret
 
 
-def _calc_texture_hist(img, texture_bins):
+def _calc_texture_hist(img: np.ndarray, texture_bins: int) -> np.ndarray:
     '''
     Calculate texture histogram for each region
 
@@ -128,8 +128,8 @@ def _calc_texture_hist(img, texture_bins):
     return hist
 
 
-def _extract_regions(img, color_bins, texture_bins):
-    R = {}
+def _extract_regions(img: np.ndarray, color_bins: int, texture_bins: int) -> dict:
+    R: dict = {}
 
     # get hsv image
     hsv = color.rgb2hsv(img[:, :, :3])
@@ -169,9 +169,9 @@ def _extract_regions(img, color_bins, texture_bins):
     return R
 
 
-def _extract_neighbors(regions):
+def _extract_neighbors(regions: dict) -> list:
 
-    def intersect(a, b):
+    def intersect(a: dict, b: dict) -> bool:
         if (a['min_x'] < b['min_x'] < a['max_x']
                 and a['min_y'] < b['min_y'] < a['max_y']) or (
             a['min_x'] < b['max_x'] < a['max_x']
@@ -193,7 +193,7 @@ def _extract_neighbors(regions):
     return neighbors
 
 
-def _merge_regions(r1, r2):
+def _merge_regions(r1: dict, r2: dict) -> dict:
     new_size = r1['size'] + r2['size']
     rt = {
         'min_x': min(r1['min_x'], r2['min_x']),
@@ -210,7 +210,8 @@ def _merge_regions(r1, r2):
     return rt
 
 
-def selective_search(im_orig, scale=1.0, sigma=0.8, min_size=50, color_bins=25, texture_bins=10):
+def selective_search(im_orig: np.ndarray, scale: float=1.0, sigma: float=0.8, min_size: int=50,
+                     color_bins: int=25, texture_bins: int=10) -> tuple:
     '''Selective Search
 
     Parameters
